@@ -52,7 +52,6 @@ export function readTextFile(file: string): string
 }
 
   // MY CODE END
-
 function loadScene(expansionIteration: number, wisteria: number, branchRotation: number) {
   square = new Square();
   square.create();
