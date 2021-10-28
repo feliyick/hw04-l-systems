@@ -8,6 +8,34 @@ drawing. You will rasterize your L-system using faceted geometry. Feel free
 to use ray marching to generate an interesting background, but trying to
 raymarch an entire L-system will take too long to render!
 
+# Submission
+![wisteria2](https://user-images.githubusercontent.com/59979404/139183676-c0973dfe-d37b-44d6-82db-fc7aee5caf70.PNG)
+
+## Demo Link
+https://feliyick.github.io/hw04-l-systems/
+
+## Reference Images/Inspiration
+![wisteriaRef](https://user-images.githubusercontent.com/59979404/139183744-a1af689f-5be0-42d4-b9a5-cfaf39f45813.jpg)
+
+## Implementation
+**Grammar**
+Inside my tree.ts class, you will find all the expansion and drawing rules that define my tree lsystem. The rules are:
+- Axiom : FFFAFA
+- F = {(FF, 0.7), (FgF, 0.25), (gF, 0.05)}, where F defines the main trunk and branches
+- A = {(F[ugFfAv]cfXg[bfgFAv]Xv, 1.)}, where A defines the smaller branches and leaves
+- X = {([uugv][bfgv][fcgv], 1.)}, where X defines more condensed leafy areas
+- v was my rule to draw my leaves. To make it more natural, I draw up to 6 leaves per 'v', and each leaf is oriented randomly. To mimic the wisteria leaves drooping, each leaf then calls the moveDownwards() helper function, which changes the turtles forward axis to point downwards, and spawn a few leaves along the -foward direction. 
+- r, u, f are rotations about the right, up, and forward axes by some positive angle. 
+- a, b, c are similar roations but in the negative direction. 
+- g is a randomly generated rotation about all axes. I primarily used this to help the branches randomly twist and turn in a more natural way (instead of straight lines poking out).
+
+## GUI Interaction/Additional features
+- Edit the number of iterations of the grammar from a range of 1 to 12. The user can see the tree grow from a little sapling to a full tree.
+- the  colour of the tree (from more spring time to a Wisteria colour palette). For both the branch and leaf meshes, I lerped betwen two colour palettes. 
+- The maximum angle at which the branches can rotate. 
+- I added an FBM sky in the flat shader, coloured with a mixed colour palette. The 'clouds' move along the x and y axis very gradually. 
+
+
 ## Base Code
 The provided code is very similar to that of homework 1, with the same camera and GUI layout. Additionally, we have provided you with a `Mesh` class that, given a filepath, will construct VBOs describing the vertex positions, normals, colors, uvs, and indices for any `.obj` file. The provided code also uses instanced rendering to draw a single square 10,000 times at different locations and with different colors; refer to the Assignment Requirements section for more details on instanced rendering. Farther down this README, we have also provided some example code snippets for setting up hash map structures in TypeScript.
 
