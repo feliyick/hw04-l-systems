@@ -6070,8 +6070,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-// Define an object with application parameters and button callbacks
-// This will be referred to by dat.GUI's functions that add GUI elements.
 const controls = {
     expansionIteration: 9,
     wisteria: 0,
