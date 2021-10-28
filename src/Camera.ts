@@ -8,7 +8,7 @@ class Camera {
   fovy: number = 45;
   aspectRatio: number = 1;
   near: number = 0.1;
-  far: number = 1000;
+  far: number = 3000;
   position: vec3 = vec3.create();
   direction: vec3 = vec3.create();
   target: vec3 = vec3.create();
@@ -21,6 +21,7 @@ class Camera {
 
     this.controls = CameraControls(canvas, {
       position: position,
+      eye: position,
       center: target,
     });
 

@@ -17,6 +17,18 @@ abstract class Drawable {
   translateGenerated: boolean = false;
   uvGenerated: boolean = false;
 
+  // MY CODE
+  transform1Generated: boolean = false;
+  transform2Generated: boolean = false;
+  transform3Generated: boolean = false;
+  transform4Generated: boolean = false;
+
+  bufTransform1 : WebGLBuffer;
+  bufTransform2 : WebGLBuffer;
+  bufTransform3 : WebGLBuffer;
+  bufTransform4 : WebGLBuffer;
+
+
   numInstances: number = 0; // How many instances of this Drawable the shader program should draw
 
   abstract create() : void;
@@ -60,6 +72,29 @@ abstract class Drawable {
     this.bufUV = gl.createBuffer();
   }
 
+  // MY CODE
+  generateTransform1() {
+    this.transform1Generated = true;
+    this.bufTransform1 = gl.createBuffer();
+  }
+
+  generateTransform2() {
+    this.transform2Generated = true;
+    this.bufTransform2 = gl.createBuffer();
+  }
+
+  generateTransform3() {
+    this.transform3Generated = true;
+    this.bufTransform3 = gl.createBuffer();
+  }
+
+  generateTransform4() {
+    this.transform4Generated = true;
+    this.bufTransform4 = gl.createBuffer();
+  }
+
+  //
+
   bindIdx(): boolean {
     if (this.idxGenerated) {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.bufIdx);
@@ -100,6 +135,35 @@ abstract class Drawable {
       gl.bindBuffer(gl.ARRAY_BUFFER, this.bufUV);
     }
     return this.uvGenerated;
+  }
+
+  // MY CODE
+  bindTransform1(): boolean {
+    if (this.transform1Generated) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufTransform1);
+    }
+    return this.transform1Generated;
+  }
+
+  bindTransform2(): boolean {
+    if (this.transform2Generated) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufTransform2);
+    }
+    return this.transform2Generated;
+  }
+
+  bindTransform3(): boolean {
+    if (this.transform3Generated) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufTransform3);
+    }
+    return this.transform3Generated;
+  }
+
+  bindTransform4(): boolean {
+    if (this.transform4Generated) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufTransform4);
+    }
+    return this.transform4Generated;
   }
 
   elemCount(): number {
