@@ -12,8 +12,6 @@ import DrawingRule from './LSystem/DrawingRule';
 import LSystem from './LSystem/LSystem';
 import Tree from './LSystem/Tree';
 
-// Define an object with application parameters and button callbacks
-// This will be referred to by dat.GUI's functions that add GUI elements.
 const controls = {
  expansionIteration : 9,
  wisteria : 0,
