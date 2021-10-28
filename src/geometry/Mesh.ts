@@ -3,6 +3,7 @@ import Drawable from '../rendering/gl/Drawable';
 import {gl} from '../globals';
 import * as Loader from 'webgl-obj-loader';
 
+
 class Mesh extends Drawable {
   indices: Uint32Array;
   positions: Float32Array;

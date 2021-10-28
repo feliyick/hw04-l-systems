@@ -16,7 +16,8 @@ import Tree from './LSystem/Tree';
 // This will be referred to by dat.GUI's functions that add GUI elements.
 const controls = {
  expansionIteration : 9,
- wisteria : 0
+ wisteria : 0,
+ branchRotation: 30
 };
 
 let square: Square;
@@ -27,6 +28,8 @@ let leafMesh : Mesh;
 let prevExpansionIteration: number = 5;
 let floorMesh : Mesh;
 let prevWisteria: number = 0;
+let branchRotation: number;
+let prevBranchRotation: number;
 
 // MY CODE
 // From https://stackoverflow.com/questions/14446447/how-to-read-a-local-text-file/32173142#32173142
@@ -52,7 +55,7 @@ export function readTextFile(file: string): string
 
   // MY CODE END
 
-function loadScene(expansionIteration: number, wisteria: number) {
+function loadScene(expansionIteration: number, wisteria: number, branchRotation: number) {
   square = new Square();
   square.create();
   screenQuad = new ScreenQuad();
@@ -62,7 +65,7 @@ function loadScene(expansionIteration: number, wisteria: number) {
   let branchOBJ = readTextFile('./cylinder.obj');
   branchMesh = new Mesh(branchOBJ, vec3.fromValues(0, 0, 0));
   branchMesh.create();
-  let tree = new Tree(expansionIteration); // depth of 1.
+  let tree = new Tree(expansionIteration, branchRotation); // depth of 1.
   tree.build();
 
   let branchColourW = vec3.fromValues(0.447, 0.513, 0.498);
@@ -234,8 +237,9 @@ function main() {
 
   // Add controls to the gui
   const gui = new DAT.GUI();
-  gui.add(controls, 'expansionIteration', 1, 20).step(1);
+  gui.add(controls, 'expansionIteration', 1, 10).step(1);
   gui.add(controls, 'wisteria', 0, 1).step(0.1);
+  gui.add(controls, 'branchRotation', 20, 70).step(2);
   // get canvas and webgl context
   const canvas = <HTMLCanvasElement> document.getElementById('canvas');
   const gl = <WebGL2RenderingContext> canvas.getContext('webgl2');
@@ -247,10 +251,10 @@ function main() {
   setGL(gl);
 
   // Initial call to load scene
-  loadScene(controls.expansionIteration, controls.wisteria);
+  loadScene(controls.expansionIteration, controls.wisteria, controls.branchRotation);
 
   // const camera = new Camera(vec3.fromValues(60, 10, 30), vec3.fromValues(0, 25, 0));
-  const camera = new Camera(vec3.fromValues(60, 10, 60), vec3.fromValues(0, 25, 0));
+  const camera = new Camera(vec3.fromValues(45, 15, 70), vec3.fromValues(10, 25, 0));
 
   const renderer = new OpenGLRenderer(canvas);
   renderer.setClearColor(0.2, 0.2, 0.2, 1);
@@ -278,10 +282,12 @@ function main() {
     renderer.clear();
 
     if (controls.expansionIteration != prevExpansionIteration
-      || controls.wisteria != prevWisteria) {
-      loadScene(controls.expansionIteration, controls.wisteria);
+      || controls.wisteria != prevWisteria
+      || controls.branchRotation != prevBranchRotation) {
+      loadScene(controls.expansionIteration, controls.wisteria, controls.branchRotation);
       prevExpansionIteration = controls.expansionIteration;
       prevWisteria = controls.wisteria;
+      prevBranchRotation = controls.branchRotation;
     }
     renderer.render(camera, flat, [screenQuad]);
     renderer.render(camera, instancedShader, [

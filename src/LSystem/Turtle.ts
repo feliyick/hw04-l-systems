@@ -34,6 +34,10 @@ class Turtle {
     return new Turtle(posCopy, forwardCopy, rightCopy, upCopy, this.depth)
   }
 
+  resetTrunkDepth() {
+    this.trunkDepth = 0;
+  }
+
   getPosition(): vec4 {
     return vec4.fromValues(this.position[0], this.position[1], this.position[2], this.position[3]);
   }
@@ -124,16 +128,8 @@ class Turtle {
   getScaleMatrix(): mat4 {
     let x =  1 / (this.depth);
     let z = 1 / (this.depth);
-    // console.log(x)
-    if (this.depth < 1.) {
-      x =  10. / (this.trunkDepth);
-      z = 10. / (this.trunkDepth);
-      // console.log("hi", x)
-    }
     let matrix = mat4.create();
-    let identity = mat4.create();
-    mat4.identity(identity);
-    mat4.scale(matrix, identity, vec3.fromValues(x, 1, z));
+    mat4.fromScaling(matrix, vec3.fromValues(x, 1.0, z))
     return matrix;
   }
 

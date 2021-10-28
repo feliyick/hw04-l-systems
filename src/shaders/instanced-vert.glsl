@@ -29,7 +29,7 @@ void main()
 {
     fs_Col = vs_Col;
     fs_Pos = vs_Pos;
-    vec4 lightPos = vec4(50, 40, 0, 0);
+    vec4 lightPos = vec4(50, 40, 30, 0);
 
 
     mat4 transformation = mat4(vs_Transform1, vs_Transform2, vs_Transform3, vs_Transform4);

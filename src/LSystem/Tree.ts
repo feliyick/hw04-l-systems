@@ -14,6 +14,8 @@ import LSystem from './LSystem';
  * 
  * RULE SET
  * F : Move forward
+ * X : Sub rule; Small bush of leaves
+ * A : Main rule; trunk etc.
  * r : + rotate about local right x
  * u : + rotate about local up y
  * f : + rotate about local forward z
@@ -28,7 +30,7 @@ import LSystem from './LSystem';
 
 class Tree {
 
-    lsystem : LSystem = new LSystem("FFAFA") 
+    lsystem : LSystem = new LSystem("FFFAFA") 
     depth : number;
     FExpand : ExpansionRule;
     AExpand : ExpansionRule;
@@ -42,6 +44,7 @@ class Tree {
     cExpand : ExpansionRule;
     vExpand : ExpansionRule;
     gExpand : ExpansionRule;
+    XExpand : ExpansionRule;
 
     FDraw : DrawingRule;
     ADraw : DrawingRule;
@@ -55,22 +58,31 @@ class Tree {
     cRotate : DrawingRule;
     vLeaf : DrawingRule;
     gRotate : DrawingRule;
+    XDraw : DrawingRule;
 
     transformMats : Array<mat4> = new Array();
     leafTransformMats : Array<mat4> = new Array();
     positions : Array<vec4> = new Array();
     rotations : Array<vec4> = new Array();
     scales : Array<vec3> = new Array();
+    branchRotation: number;
 
-    constructor(depth : number) {
+    constructor(depth : number, branchRotation: number) {
         this.depth = depth; 
+        this.branchRotation = branchRotation;
 
-        let FMap = new Map([["F", 0.7], ["FgF", 0.25], ["ggF", 0.05]]);
+        let FMap = new Map([["F", 0.7], ["FgF", 0.25], ["gF", 0.05]]);
         this.FExpand = new ExpansionRule(FMap);
 
-        let AMap = new Map([["F[ugFfAv]cfg[bfgFAv]v", 1.]]);
+        let AMap = new Map([["F[ugFfAv]cfXg[bfgFAv]Xv", 1.]]);
+        // let AMap = new Map([["[uFAv]F[ffgaFAv]F[aarrFFAv][gbbFAv]Fv", 1.]]);
+
+        //FFFF[+FFXL]F[#FFXL]F[$FFXL]F[-FFXL]FXL
         // let AMap = new Map([["FF[bFA]ugF[cFgFA][FagFbg][gcF[uugv][aAgv]]", 0.5], ["FF[cA]uF[raaFcgA][Frbb][cbF[ggv][fbAv]]", 0.5]]);
         this.AExpand = new ExpansionRule(AMap);
+
+        let XMap = new Map([["[uugv][bfgv][fcgv]", 1.]])
+        this.XExpand = new ExpansionRule(XMap);
 
         let saveMap = new Map([["[", 1.0]]);
         this.saveExpand = new ExpansionRule(saveMap);
@@ -114,33 +126,10 @@ class Tree {
         this.lsystem.addExpansionRule("c", this.cExpand);
         this.lsystem.addExpansionRule("v", this.vExpand);
         this.lsystem.addExpansionRule("g", this.gExpand);
+        this.lsystem.addExpansionRule("X", this.XExpand);
     }
 
-    rng(seed = '') {
-        let x = 0
-        let y = 0
-        let z = 0
-        let w = 0
-      
-        function next() {
-          const t = x ^ (x << 11)
-          x = y
-          y = z
-          z = w
-          w ^= ((w >>> 19) ^ t ^ (t >>> 8)) >>> 0
-          return w / 0x100000000
-        }
-      
-        for (var k = 0; k < seed.length + 64; k++) {
-          x ^= seed.charCodeAt(k) | 0
-          next()
-        }
-      
-        return next
-      }
-
     drawLine() {
-        // if (this.lsystem.turtle.alive) {
             if (this.lsystem.turtle.growingLeaves) {
                 this.leafTransformMats.push(this.lsystem.turtle.getTransformMat());
                 this.transformMats.push(this.lsystem.turtle.getTransformMat());
@@ -150,37 +139,29 @@ class Tree {
             
             this.lsystem.turtle.moveForward(0.7);
             this.lsystem.turtle.increaseTrunkDepth(0.7);
-            // if (this.lsystem.turtle.position[1] < 8 && this.lsystem.turtle.getDepth() > 3 && !this.lsystem.turtle.isTrunk) {
-            //     this.lsystem.turtle.kill();
-            // }
-        // }
-        
-
     }
 
     moveDownwards() {
         this.lsystem.turtle.forward = vec4.fromValues(0, -1, 0, 0);
         for(let i = 0; i < 2; i++) {
-            this.lsystem.turtle.moveForward(0.7);
+            this.lsystem.turtle.moveForward(0.6);
         }
     }
-
-
-
 
     drawV() {
         let p = 0.8 * Math.max(1.0 - this.depth, 1.0);
         if (this.lsystem.turtle.getDepth() < 6) {
             p = 0.0;
+            return;
         }
         let probability = Math.random();
         if (probability < p) {
+            // draw 6 leaves with random rotation 
             let numLeaves = 1 + Math.floor(6 * Math.random());
             for (var i = 0; i < numLeaves; i++) {
                 let transformation = mat4.create();
                 let trans =  this.lsystem.turtle.getTranslationMatrix();
                 let rot = this.lsystem.turtle.getRotationMatrix();
-                mat4.multiply(transformation, trans, rot);
                 let identity = mat4.create();
                 mat4.identity(identity);
                 let altRot = mat4.create();
@@ -188,9 +169,9 @@ class Tree {
                 mat4.rotateY(altRot, altRot, Math.random() * 10 * (i + 1));
                 mat4.rotateZ(altRot, altRot, Math.random() * 10 * (i + 1));
                 
+                mat4.multiply(transformation, trans, rot);
                 mat4.multiply(transformation, transformation, altRot);
 
-                
                 this.leafTransformMats.push(transformation);
                 this.moveDownwards();
             }
@@ -198,58 +179,39 @@ class Tree {
     }
 
     rotateR() {
-        // for (let i = 0 ; i < 4; i++) {
-            let theta: number = 40 / (0.5 * this.lsystem.turtle.depth);
-            theta += 5 * Math.random();
+            let theta: number = this.branchRotation / (0.5 * this.lsystem.turtle.depth);
+            theta += 4 * Math.random();
             this.lsystem.turtle.rotateRight(theta);
-            // this.drawLine();
-        // }
-        
     }
 
     rotateU() {
-        // for (let i = 0 ; i < 4; i++) {
-            let theta: number = 40 / (0.5 * this.lsystem.turtle.depth);
-            theta += 5 * Math.random();
+            let theta: number = this.branchRotation / (0.5 * this.lsystem.turtle.depth);
+            theta += 4 * Math.random();
             this.lsystem.turtle.rotateUp(theta);
-            // this.drawLine();
-        // }
     }
 
     rotateF() {
-        // for (let i = 0 ; i < 4; i++) {
-            let theta: number = 40 / (0.5 * this.lsystem.turtle.depth);
-            theta += 5 * Math.random();
+            let theta: number = this.branchRotation / (0.5 * this.lsystem.turtle.depth);
+            theta += 4 * Math.random();
             this.lsystem.turtle.rotateForward(theta);
-            // this.drawLine();
-        // }
     }
 
     rotateA() {
-        // for (let i = 0 ; i < 4; i++) {
-            let theta: number = 40 / (0.5 * this.lsystem.turtle.depth);
-            theta -= 5 * Math.random();
+            let theta: number = this.branchRotation / (0.5 * this.lsystem.turtle.depth);
+            theta -= 4 * Math.random();
             this.lsystem.turtle.rotateRight(-theta);
-            // this.drawLine();
-        // }
     }
 
     rotateB() {
-        // for (let i = 0 ; i < 4; i++) {
-            let theta: number = 40 / (0.5 * this.lsystem.turtle.depth);
-            theta -= 5 * Math.random();
+            let theta: number = this.branchRotation / (0.5 * this.lsystem.turtle.depth);
+            theta -= 4 * Math.random();
             this.lsystem.turtle.rotateUp(-theta);
-            // this.drawLine();
-        // }
     }
 
     rotateC() {
-        // for (let i = 0 ; i < 4; i++) {
-            let theta: number = 40 / (0.5 * this.lsystem.turtle.depth);
-            theta -= 5 * Math.random();
+            let theta: number = this.branchRotation / (0.5 * this.lsystem.turtle.depth);
+            theta -= 4 * Math.random();
             this.lsystem.turtle.rotateForward(-theta);
-            // this.drawLine();
-        // }
     }
 
 
@@ -262,16 +224,13 @@ class Tree {
         let randU: number = Math.pow(-1, Math.floor(Math.random() + 0.5)) * 4.3 * Math.random();
         let randF: number = Math.pow(-1, Math.floor(Math.random() + 0.5)) * 4.3 * Math.random();
 
-        // if (!this.lsystem.turtle.isTrunk) {
-            randR *= Math.min(this.lsystem.turtle.getDepth(), 35);
-            randU *= Math.min(this.lsystem.turtle.getDepth(), 35);
-            randF *= Math.min(this.lsystem.turtle.getDepth(), 35);
-        // }
+        randR *= Math.min(this.lsystem.turtle.getDepth(), this.branchRotation);
+        randU *= Math.min(this.lsystem.turtle.getDepth(), this.branchRotation);
+        randF *= Math.min(this.lsystem.turtle.getDepth(), this.branchRotation);
 
-        this.lsystem.turtle.rotateForward(randF);
-        this.lsystem.turtle.rotateUp(randU);
         this.lsystem.turtle.rotateRight(randR);
-        // this.drawLine();
+        this.lsystem.turtle.rotateUp(randU);
+        this.lsystem.turtle.rotateForward(randF);
     }
 
     saveTurtle() {
@@ -324,6 +283,9 @@ class Tree {
         let gMap = new Map([[this.rotateRandom.bind(this), 1.0]]);
         this.gRotate = new DrawingRule(gMap);
 
+        let XMap = new Map([[this.drawLine.bind(this), 1.0]]);
+        this.XDraw = new DrawingRule(XMap);
+
     
         this.lsystem.addDrawingRule("F", this.FDraw);
         this.lsystem.addDrawingRule("A", this.ADraw);
@@ -337,6 +299,7 @@ class Tree {
         this.lsystem.addDrawingRule("c", this.cRotate);
         this.lsystem.addDrawingRule("v", this.vLeaf);
         this.lsystem.addDrawingRule("g", this.gRotate);
+        this.lsystem.addDrawingRule("X", this.XDraw);
     }
 
     build() {
