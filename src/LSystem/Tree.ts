@@ -1,8 +1,8 @@
 import {vec3, vec4, mat4, quat, glMatrix} from 'gl-matrix';
-import Turtle from './turtle';
-import TurtleStack from './turtleStack'
-import ExpansionRule from './expansionRule'
-import DrawingRule from './drawingRule'
+import Turtle from './Turtle';
+import TurtleStack from './TurtleStack'
+import ExpansionRule from './ExpansionRule'
+import DrawingRule from './DrawingRule'
 import LSystem from './LSystem';
 
 
