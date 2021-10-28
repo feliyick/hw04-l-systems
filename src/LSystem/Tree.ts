@@ -307,7 +307,6 @@ class Tree {
         this.lsystem.expandString(this.lsystem.axiom, this.depth);
         this.lsystem.drawString();
     }
-   
 };
 
 export default Tree;
