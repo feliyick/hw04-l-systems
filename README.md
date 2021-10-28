@@ -9,6 +9,9 @@ to use ray marching to generate an interesting background, but trying to
 raymarch an entire L-system will take too long to render!
 
 # Submission
+Name: Felicity Yick
+Pennkey: feliyick
+
 ![wisteria2](https://user-images.githubusercontent.com/59979404/139183676-c0973dfe-d37b-44d6-82db-fc7aee5caf70.PNG)
 
 ## Demo Link
