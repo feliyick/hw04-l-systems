@@ -6072,8 +6072,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 const controls = {
     expansionIteration: 9,
-    wisteria: 0,
-    branchRotation: 30
+    age: 1,
+    branchRotation: 30,
+    numOranges: 1.0
 };
 let square;
 let branchMesh;
@@ -6082,9 +6083,11 @@ let time = 0.0;
 let leafMesh;
 let prevExpansionIteration = 5;
 let floorMesh;
-let prevWisteria = 0;
+let prevAge = 1;
 let branchRotation;
 let prevBranchRotation;
+let orangeMesh;
+let prevNumOranges = 1;
 // MY CODE
 // From https://stackoverflow.com/questions/14446447/how-to-read-a-local-text-file/32173142#32173142
 function readTextFile(file) {
@@ -6103,7 +6106,7 @@ function readTextFile(file) {
     return objText;
 }
 // MY CODE END
-function loadScene(expansionIteration, wisteria, branchRotation) {
+function loadScene(expansionIteration, wisteria, branchRotation, numOranges) {
     square = new __WEBPACK_IMPORTED_MODULE_3__geometry_Square__["a" /* default */]();
     square.create();
     screenQuad = new __WEBPACK_IMPORTED_MODULE_4__geometry_ScreenQuad__["a" /* default */]();
@@ -6113,9 +6116,9 @@ function loadScene(expansionIteration, wisteria, branchRotation) {
     let branchOBJ = readTextFile('./cylinder.obj');
     branchMesh = new __WEBPACK_IMPORTED_MODULE_9__geometry_Mesh__["a" /* default */](branchOBJ, __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(0, 0, 0));
     branchMesh.create();
-    let tree = new __WEBPACK_IMPORTED_MODULE_10__LSystem_Tree__["a" /* default */](expansionIteration, branchRotation); // depth of 1.
+    let tree = new __WEBPACK_IMPORTED_MODULE_10__LSystem_Tree__["a" /* default */](expansionIteration, branchRotation, wisteria, numOranges); // depth of 1.
     tree.build();
-    let branchColourW = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(0.447, 0.513, 0.498);
+    let branchColourW = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(79 / 255, 54 / 255, 21 / 255);
     let branchColourB = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(0.458, 0.372, 0.282);
     let branchColour = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].create();
     __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].lerp(branchColour, branchColourB, branchColourW, wisteria);
@@ -6146,14 +6149,49 @@ function loadScene(expansionIteration, wisteria, branchRotation) {
     let transform4 = new Float32Array(trans4Arr);
     branchMesh.setInstanceVBOs(colors, transform1, transform2, transform3, transform4);
     branchMesh.setNumInstances(tree.transformMats.length);
+    // ORANGES
+    let orangeOBJ = readTextFile('./Orange.obj');
+    orangeMesh = new __WEBPACK_IMPORTED_MODULE_9__geometry_Mesh__["a" /* default */](orangeOBJ, __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(0, 0, 0));
+    orangeMesh.create();
+    let orangeColour01 = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(252. / 255., 159. / 255, 66. / 255);
+    let orangeColour02 = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(245. / 255., 169. / 255, 39. / 255);
+    let orangeColour = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].create();
+    __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].lerp(orangeColour, orangeColour02, orangeColour01, 0.4);
+    let orangeColsArr = new Array();
+    let orangeTrans1Arr = new Array();
+    let orangeTrans2Arr = new Array();
+    let orangeTrans3Arr = new Array();
+    let orangeTrans4Arr = new Array();
+    for (let t of tree.orangeTransformMats) {
+        for (let i = 0; i < 4; ++i) {
+            orangeTrans1Arr.push(t[i]); // 0, 1, 2, 3
+            orangeTrans2Arr.push(t[4 + i]); // 4, 5, 6, 7
+            orangeTrans3Arr.push(t[8 + i]); // 8, 9, 10, 11
+        }
+        for (let i = 0; i < 3; ++i) {
+            orangeTrans4Arr.push(t[12 + i]); // 12, 13, 14, 15
+        }
+        orangeTrans4Arr.push(1); // 16
+        orangeColsArr.push(orangeColour[0]);
+        orangeColsArr.push(orangeColour[1]);
+        orangeColsArr.push(orangeColour[2]);
+        orangeColsArr.push(1.0);
+    }
+    let orangeColors = new Float32Array(orangeColsArr);
+    let orangTransform1 = new Float32Array(orangeTrans1Arr);
+    let orangTransform2 = new Float32Array(orangeTrans2Arr);
+    let orangTransform3 = new Float32Array(orangeTrans3Arr);
+    let orangTransform4 = new Float32Array(orangeTrans4Arr);
+    orangeMesh.setInstanceVBOs(orangeColors, orangTransform1, orangTransform2, orangTransform3, orangTransform4);
+    orangeMesh.setNumInstances(tree.orangeTransformMats.length);
     // LEAVES
     let leafOBJ = readTextFile('./leaf.obj');
     leafMesh = new __WEBPACK_IMPORTED_MODULE_9__geometry_Mesh__["a" /* default */](leafOBJ, __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(0, 0, 0));
     leafMesh.create();
-    let leafGreen01 = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(0.352, 0.466, 0.215);
-    let leafGreen02 = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(0.921, 0.4, 0.701);
-    let leafWisteria01 = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(0.901, 0.745, 0.933);
-    let leafWisteria02 = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(0.890, 0.933, 0.745);
+    let leafGreen01 = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(149 / 255, 227 / 255, 104 / 255);
+    let leafGreen02 = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(96 / 255, 145 / 255, 68 / 255);
+    let leafWisteria01 = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(255 / 255, 160 / 255, 145 / 255);
+    let leafWisteria02 = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(222 / 255, 113 / 255, 95 / 255);
     let leavesColsArr = new Array();
     let leavesTrans1Arr = new Array();
     let leavesTrans2Arr = new Array();
@@ -6173,11 +6211,11 @@ function loadScene(expansionIteration, wisteria, branchRotation) {
         __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].multiply(colorMix3, leafWisteria01, __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(1 - turtlePosY, 1 - turtlePosY, 1 - turtlePosY));
         __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].multiply(colorMix4, leafWisteria02, __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(turtlePosY, turtlePosY, turtlePosY));
         __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].add(colorMix5, colorMix3, colorMix4);
-        __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].lerp(colorMix, colorMix, colorMix5, wisteria);
-        let branchColourW = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(0.447, 0.513, 0.498);
-        let branchColourB = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(0.458, 0.372, 0.282);
-        let branchColour = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].create();
-        __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].lerp(branchColour, branchColourB, branchColourW, wisteria);
+        __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].lerp(colorMix, colorMix5, colorMix, wisteria);
+        // let branchColourW = vec3.fromValues(0.447, 0.513, 0.498);
+        // let branchColourB = vec3.fromValues(0.458, 0.372, 0.282);
+        // let branchColour = vec3.create();
+        // vec3.lerp(branchColour, branchColourB, branchColourW, wisteria);
         for (let i = 0; i < 4; ++i) {
             leavesTrans1Arr.push(t[i]); // 0, 1, 2, 3
             leavesTrans2Arr.push(t[4 + i]); // 4, 5, 6, 7
@@ -6248,8 +6286,9 @@ function main() {
     // Add controls to the gui
     const gui = new __WEBPACK_IMPORTED_MODULE_2_dat_gui__["GUI"]();
     gui.add(controls, 'expansionIteration', 1, 10).step(1);
-    gui.add(controls, 'wisteria', 0, 1).step(0.1);
+    gui.add(controls, 'age', 0, 1).step(0.1);
     gui.add(controls, 'branchRotation', 20, 70).step(2);
+    gui.add(controls, 'numOranges', 0., 2.).step(0.1);
     // get canvas and webgl context
     const canvas = document.getElementById('canvas');
     const gl = canvas.getContext('webgl2');
@@ -6260,7 +6299,7 @@ function main() {
     // Later, we can import `gl` from `globals.ts` to access it
     Object(__WEBPACK_IMPORTED_MODULE_7__globals__["b" /* setGL */])(gl);
     // Initial call to load scene
-    loadScene(controls.expansionIteration, controls.wisteria, controls.branchRotation);
+    loadScene(controls.expansionIteration, controls.age, controls.branchRotation, controls.numOranges);
     // const camera = new Camera(vec3.fromValues(60, 10, 30), vec3.fromValues(0, 25, 0));
     const camera = new __WEBPACK_IMPORTED_MODULE_6__Camera__["a" /* default */](__WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(45, 15, 70), __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(10, 25, 0));
     const renderer = new __WEBPACK_IMPORTED_MODULE_5__rendering_gl_OpenGLRenderer__["a" /* default */](canvas);
@@ -6285,19 +6324,22 @@ function main() {
         gl.viewport(0, 0, window.innerWidth, window.innerHeight);
         renderer.clear();
         if (controls.expansionIteration != prevExpansionIteration
-            || controls.wisteria != prevWisteria
-            || controls.branchRotation != prevBranchRotation) {
-            loadScene(controls.expansionIteration, controls.wisteria, controls.branchRotation);
+            || controls.age != prevAge
+            || controls.branchRotation != prevBranchRotation
+            || controls.numOranges != prevNumOranges) {
+            loadScene(controls.expansionIteration, controls.age, controls.branchRotation, controls.numOranges);
             prevExpansionIteration = controls.expansionIteration;
-            prevWisteria = controls.wisteria;
+            prevAge = controls.age;
             prevBranchRotation = controls.branchRotation;
+            prevNumOranges = controls.numOranges;
         }
         renderer.render(camera, flat, [screenQuad]);
         renderer.render(camera, instancedShader, [
             square,
             branchMesh,
             leafMesh,
-            floorMesh
+            floorMesh,
+            orangeMesh
         ]);
         stats.end();
         // Tell the browser to call `tick` again whenever it renders a new frame
@@ -16886,20 +16928,27 @@ class Mesh extends __WEBPACK_IMPORTED_MODULE_1__rendering_gl_Drawable__["a" /* d
  * ] : reset to previous saved position
  * v : spawn leaf
  * g : rotate randomly
+ * O : spawm orange
  */
 class Tree {
-    constructor(depth, branchRotation) {
+    constructor(depth, branchRotation, wisteria, numOranges) {
         this.lsystem = new __WEBPACK_IMPORTED_MODULE_3__LSystem__["a" /* default */]("FFFAFA");
         this.transformMats = new Array();
         this.leafTransformMats = new Array();
+        this.orangeTransformMats = new Array();
         this.positions = new Array();
         this.rotations = new Array();
         this.scales = new Array();
         this.depth = depth;
         this.branchRotation = branchRotation;
-        let FMap = new Map([["F", 0.7], ["FgF", 0.25], ["gF", 0.05]]);
+        this.wisteria = wisteria;
+        this.numOranges = numOranges;
+        let FMap = new Map([["F", 0.7], ["FF", 0.25], ["Fg", 0.05]]);
         this.FExpand = new __WEBPACK_IMPORTED_MODULE_1__ExpansionRule__["a" /* default */](FMap);
-        let AMap = new Map([["F[ugFfAv]cfXg[bfgFAv]Xv", 1.]]);
+        //["FFFF[+FFLXL]FF[#FFXLA]FLFL[$FFLXL]FF[-FFLXL]FFXLA"
+        let AMap = new Map([["F[ugFfAv]cfXg[bfgFAO]Xv", 1.]]);
+        // let AMap = new Map([["F[ugFfAv]cfXg[bfgFAv]Xv", 1.]]);
+        // let AMap = new Map([["FFF[rFFvAv]FF[rFFAv]FvFv[aFFv]FF[bFFv]FFAv", 1.]]);
         // let AMap = new Map([["[uFAv]F[ffgaFAv]F[aarrFFAv][gbbFAv]Fv", 1.]]);
         //FFFF[+FFXL]F[#FFXL]F[$FFXL]F[-FFXL]FXL
         // let AMap = new Map([["FF[bFA]ugF[cFgFA][FagFbg][gcF[uugv][aAgv]]", 0.5], ["FF[cA]uF[raaFcgA][Frbb][cbF[ggv][fbAv]]", 0.5]]);
@@ -16926,6 +16975,8 @@ class Tree {
         this.vExpand = new __WEBPACK_IMPORTED_MODULE_1__ExpansionRule__["a" /* default */](vMap);
         let gMap = new Map([["g", 1.0]]);
         this.gExpand = new __WEBPACK_IMPORTED_MODULE_1__ExpansionRule__["a" /* default */](gMap);
+        let OMap = new Map([["O", 1.0]]);
+        this.OExpand = new __WEBPACK_IMPORTED_MODULE_1__ExpansionRule__["a" /* default */](OMap);
         this.lsystem.addExpansionRule("F", this.FExpand);
         this.lsystem.addExpansionRule("A", this.AExpand);
         this.lsystem.addExpansionRule("[", this.saveExpand);
@@ -16939,6 +16990,7 @@ class Tree {
         this.lsystem.addExpansionRule("v", this.vExpand);
         this.lsystem.addExpansionRule("g", this.gExpand);
         this.lsystem.addExpansionRule("X", this.XExpand);
+        this.lsystem.addExpansionRule("O", this.OExpand);
     }
     drawLine() {
         if (this.lsystem.turtle.growingLeaves) {
@@ -16955,6 +17007,30 @@ class Tree {
         this.lsystem.turtle.forward = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["e" /* vec4 */].fromValues(0, -1, 0, 0);
         for (let i = 0; i < 2; i++) {
             this.lsystem.turtle.moveForward(0.6);
+        }
+    }
+    drawO() {
+        let p = this.numOranges * this.wisteria / 10. * Math.max(1.0 - this.depth, 1.0);
+        if (this.lsystem.turtle.getDepth() < 6) {
+            p = 0.0;
+            return;
+        }
+        let probability = Math.random();
+        if (probability < p) {
+            // draw 6 leaves with random rotation 
+            let transformation = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["c" /* mat4 */].create();
+            let trans = this.lsystem.turtle.getTranslationMatrix();
+            let rot = this.lsystem.turtle.getRotationMatrix();
+            let identity = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["c" /* mat4 */].create();
+            __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["c" /* mat4 */].identity(identity);
+            let altRot = __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["c" /* mat4 */].create();
+            __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["c" /* mat4 */].rotateX(altRot, identity, Math.random() * 10);
+            __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["c" /* mat4 */].rotateY(altRot, altRot, Math.random() * 10);
+            __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["c" /* mat4 */].rotateZ(altRot, altRot, Math.random() * 10);
+            __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["c" /* mat4 */].multiply(transformation, trans, rot);
+            __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["c" /* mat4 */].multiply(transformation, transformation, altRot);
+            this.orangeTransformMats.push(transformation);
+            // this.moveDownwards();
         }
     }
     drawV() {
@@ -17065,6 +17141,8 @@ class Tree {
         this.gRotate = new __WEBPACK_IMPORTED_MODULE_2__DrawingRule__["a" /* default */](gMap);
         let XMap = new Map([[this.drawLine.bind(this), 1.0]]);
         this.XDraw = new __WEBPACK_IMPORTED_MODULE_2__DrawingRule__["a" /* default */](XMap);
+        let OMap = new Map([[this.drawO.bind(this), 1.0]]);
+        this.ODraw = new __WEBPACK_IMPORTED_MODULE_2__DrawingRule__["a" /* default */](OMap);
         this.lsystem.addDrawingRule("F", this.FDraw);
         this.lsystem.addDrawingRule("A", this.ADraw);
         this.lsystem.addDrawingRule("]", this.resetDraw);
@@ -17078,6 +17156,7 @@ class Tree {
         this.lsystem.addDrawingRule("v", this.vLeaf);
         this.lsystem.addDrawingRule("g", this.gRotate);
         this.lsystem.addDrawingRule("X", this.XDraw);
+        this.lsystem.addDrawingRule("O", this.ODraw);
     }
     build() {
         this.setDrawRules();
