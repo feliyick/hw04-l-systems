@@ -14,8 +14,9 @@ import Tree from './LSystem/Tree';
 
 const controls = {
  expansionIteration : 9,
- wisteria : 0,
- branchRotation: 30
+ age : 1,
+ branchRotation: 30,
+ numOranges: 1.0
 };
 
 let square: Square;
@@ -25,9 +26,11 @@ let time: number = 0.0;
 let leafMesh : Mesh;
 let prevExpansionIteration: number = 5;
 let floorMesh : Mesh;
-let prevWisteria: number = 0;
+let prevAge: number = 1;
 let branchRotation: number;
 let prevBranchRotation: number;
+let orangeMesh: Mesh;
+let prevNumOranges : number = 1;
 
 // MY CODE
 // From https://stackoverflow.com/questions/14446447/how-to-read-a-local-text-file/32173142#32173142
@@ -52,7 +55,7 @@ export function readTextFile(file: string): string
 }
 
   // MY CODE END
-function loadScene(expansionIteration: number, wisteria: number, branchRotation: number) {
+function loadScene(expansionIteration: number, wisteria: number, branchRotation: number, numOranges: number) {
   square = new Square();
   square.create();
   screenQuad = new ScreenQuad();
@@ -62,10 +65,10 @@ function loadScene(expansionIteration: number, wisteria: number, branchRotation:
   let branchOBJ = readTextFile('./cylinder.obj');
   branchMesh = new Mesh(branchOBJ, vec3.fromValues(0, 0, 0));
   branchMesh.create();
-  let tree = new Tree(expansionIteration, branchRotation); // depth of 1.
+  let tree = new Tree(expansionIteration, branchRotation, wisteria, numOranges); // depth of 1.
   tree.build();
 
-  let branchColourW = vec3.fromValues(0.447, 0.513, 0.498);
+  let branchColourW = vec3.fromValues(79/255, 54/255, 21/255);
   let branchColourB = vec3.fromValues(0.458, 0.372, 0.282);
   let branchColour = vec3.create();
   vec3.lerp(branchColour, branchColourB, branchColourW, wisteria);
@@ -102,16 +105,64 @@ function loadScene(expansionIteration: number, wisteria: number, branchRotation:
   branchMesh.setInstanceVBOs(colors, transform1, transform2, transform3, transform4);
   branchMesh.setNumInstances(tree.transformMats.length);
 
+
+  // ORANGES
+  let orangeOBJ = readTextFile('./Orange.obj');
+  orangeMesh = new Mesh(orangeOBJ, vec3.fromValues(0, 0, 0));
+  orangeMesh.create();
+
+
+  let orangeColour01 = vec3.fromValues(252. / 255., 159./ 255, 66./ 255);
+  let orangeColour02 = vec3.fromValues(245./ 255., 169./ 255, 39./ 255);
+  let orangeColour = vec3.create();
+  vec3.lerp(orangeColour, orangeColour02, orangeColour01, 0.4);
+  let orangeColsArr = new Array();
+  let orangeTrans1Arr = new Array();
+  let orangeTrans2Arr = new Array();
+  let orangeTrans3Arr = new Array();
+  let orangeTrans4Arr = new Array();
+
+  for (let t of tree.orangeTransformMats) {
+    for (let i = 0; i < 4; ++i) {
+      orangeTrans1Arr.push(t[i]); // 0, 1, 2, 3
+      orangeTrans2Arr.push(t[4 + i]); // 4, 5, 6, 7
+      orangeTrans3Arr.push(t[8 + i]); // 8, 9, 10, 11
+    }
+    for (let i = 0; i < 3; ++i) {
+      orangeTrans4Arr.push(t[12 + i]); // 12, 13, 14, 15
+    }
+    orangeTrans4Arr.push(1); // 16
+
+    orangeColsArr.push(orangeColour[0]);
+    orangeColsArr.push(orangeColour[1]);
+    orangeColsArr.push(orangeColour[2]);
+    orangeColsArr.push(1.0);
+
+  }
+
+  let orangeColors: Float32Array = new Float32Array(orangeColsArr);
+  let orangTransform1: Float32Array = new Float32Array(orangeTrans1Arr);
+  let orangTransform2: Float32Array = new Float32Array(orangeTrans2Arr);
+  let orangTransform3: Float32Array = new Float32Array(orangeTrans3Arr);
+  let orangTransform4: Float32Array = new Float32Array(orangeTrans4Arr);
+
+  orangeMesh.setInstanceVBOs(orangeColors, orangTransform1, orangTransform2, orangTransform3, orangTransform4);
+  orangeMesh.setNumInstances(tree.orangeTransformMats.length);
+
+
+
+
+
   // LEAVES
 
   let leafOBJ = readTextFile('./leaf.obj');
   leafMesh = new Mesh(leafOBJ, vec3.fromValues(0, 0, 0));
   leafMesh.create();
 
-  let leafGreen01 = vec3.fromValues(0.352, 0.466, 0.215);
-  let leafGreen02 = vec3.fromValues(0.921, 0.4, 0.701);
-  let leafWisteria01 = vec3.fromValues(0.901, 0.745, 0.933);
-  let leafWisteria02 = vec3.fromValues(0.890, 0.933, 0.745);
+  let leafGreen01 = vec3.fromValues(149/255, 227/255, 104/255);
+  let leafGreen02 = vec3.fromValues(96/255, 145/255, 68/255);
+  let leafWisteria01 = vec3.fromValues(255/255, 160/255, 145/255);
+  let leafWisteria02 = vec3.fromValues(222/255, 113/255, 95/255);
 
   let leavesColsArr = new Array();
   let leavesTrans1Arr = new Array();
@@ -137,12 +188,12 @@ function loadScene(expansionIteration: number, wisteria: number, branchRotation:
     vec3.multiply(colorMix4, leafWisteria02, vec3.fromValues(turtlePosY, turtlePosY, turtlePosY));
     
     vec3.add(colorMix5, colorMix3, colorMix4);
-    vec3.lerp(colorMix, colorMix, colorMix5, wisteria);
+    vec3.lerp(colorMix, colorMix5, colorMix , wisteria);
 
-    let branchColourW = vec3.fromValues(0.447, 0.513, 0.498);
-    let branchColourB = vec3.fromValues(0.458, 0.372, 0.282);
-    let branchColour = vec3.create();
-    vec3.lerp(branchColour, branchColourB, branchColourW, wisteria);
+    // let branchColourW = vec3.fromValues(0.447, 0.513, 0.498);
+    // let branchColourB = vec3.fromValues(0.458, 0.372, 0.282);
+    // let branchColour = vec3.create();
+    // vec3.lerp(branchColour, branchColourB, branchColourW, wisteria);
   
     for (let i = 0; i < 4; ++i) {
       leavesTrans1Arr.push(t[i]); // 0, 1, 2, 3
@@ -235,8 +286,9 @@ function main() {
   // Add controls to the gui
   const gui = new DAT.GUI();
   gui.add(controls, 'expansionIteration', 1, 10).step(1);
-  gui.add(controls, 'wisteria', 0, 1).step(0.1);
+  gui.add(controls, 'age', 0, 1).step(0.1);
   gui.add(controls, 'branchRotation', 20, 70).step(2);
+  gui.add(controls, 'numOranges', 0., 2.).step(0.1);
   // get canvas and webgl context
   const canvas = <HTMLCanvasElement> document.getElementById('canvas');
   const gl = <WebGL2RenderingContext> canvas.getContext('webgl2');
@@ -248,7 +300,7 @@ function main() {
   setGL(gl);
 
   // Initial call to load scene
-  loadScene(controls.expansionIteration, controls.wisteria, controls.branchRotation);
+  loadScene(controls.expansionIteration, controls.age, controls.branchRotation, controls.numOranges);
 
   // const camera = new Camera(vec3.fromValues(60, 10, 30), vec3.fromValues(0, 25, 0));
   const camera = new Camera(vec3.fromValues(45, 15, 70), vec3.fromValues(10, 25, 0));
@@ -279,19 +331,22 @@ function main() {
     renderer.clear();
 
     if (controls.expansionIteration != prevExpansionIteration
-      || controls.wisteria != prevWisteria
-      || controls.branchRotation != prevBranchRotation) {
-      loadScene(controls.expansionIteration, controls.wisteria, controls.branchRotation);
+      || controls.age != prevAge
+      || controls.branchRotation != prevBranchRotation
+      || controls.numOranges != prevNumOranges) {
+      loadScene(controls.expansionIteration, controls.age, controls.branchRotation, controls.numOranges);
       prevExpansionIteration = controls.expansionIteration;
-      prevWisteria = controls.wisteria;
+      prevAge = controls.age;
       prevBranchRotation = controls.branchRotation;
+      prevNumOranges = controls.numOranges;
     }
     renderer.render(camera, flat, [screenQuad]);
     renderer.render(camera, instancedShader, [
       square,
       branchMesh,
       leafMesh,
-      floorMesh
+      floorMesh,
+      orangeMesh
     ]);
     stats.end();
 

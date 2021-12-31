@@ -4,8 +4,7 @@ import TurtleStack from './TurtleStack'
 import ExpansionRule from './ExpansionRule'
 import DrawingRule from './DrawingRule'
 import LSystem from './LSystem';
-
-
+import * as ran from 'ranjs';
 /**
  * ORIENTATION AXES
  * Forward: (0, 1, 0, 0)
@@ -26,6 +25,7 @@ import LSystem from './LSystem';
  * ] : reset to previous saved position
  * v : spawn leaf
  * g : rotate randomly
+ * O : spawm orange
  */
 
 class Tree {
@@ -45,6 +45,7 @@ class Tree {
     vExpand : ExpansionRule;
     gExpand : ExpansionRule;
     XExpand : ExpansionRule;
+    OExpand : ExpansionRule;
 
     FDraw : DrawingRule;
     ADraw : DrawingRule;
@@ -59,22 +60,32 @@ class Tree {
     vLeaf : DrawingRule;
     gRotate : DrawingRule;
     XDraw : DrawingRule;
+    ODraw : DrawingRule;
 
     transformMats : Array<mat4> = new Array();
     leafTransformMats : Array<mat4> = new Array();
+    orangeTransformMats : Array<mat4> = new Array();
     positions : Array<vec4> = new Array();
     rotations : Array<vec4> = new Array();
     scales : Array<vec3> = new Array();
     branchRotation: number;
+    wisteria: number;
+    numOranges: number;
 
-    constructor(depth : number, branchRotation: number) {
+    constructor(depth : number, branchRotation: number, wisteria: number, numOranges: number) {
         this.depth = depth; 
         this.branchRotation = branchRotation;
-
-        let FMap = new Map([["F", 0.7], ["FgF", 0.25], ["gF", 0.05]]);
+        this.wisteria = wisteria;
+        this.numOranges = numOranges;
+        
+        let FMap = new Map([["F", 0.7], ["FF", 0.25], ["Fg", 0.05]]);
         this.FExpand = new ExpansionRule(FMap);
+//["FFFF[+FFLXL]FF[#FFXLA]FLFL[$FFLXL]FF[-FFLXL]FFXLA"
+        let AMap = new Map([["F[ugFfAv]cfXg[bfgFAO]Xv", 1.]]);
 
-        let AMap = new Map([["F[ugFfAv]cfXg[bfgFAv]Xv", 1.]]);
+        // let AMap = new Map([["F[ugFfAv]cfXg[bfgFAv]Xv", 1.]]);
+        // let AMap = new Map([["FFF[rFFvAv]FF[rFFAv]FvFv[aFFv]FF[bFFv]FFAv", 1.]]);
+
         // let AMap = new Map([["[uFAv]F[ffgaFAv]F[aarrFFAv][gbbFAv]Fv", 1.]]);
 
         //FFFF[+FFXL]F[#FFXL]F[$FFXL]F[-FFXL]FXL
@@ -114,6 +125,9 @@ class Tree {
         let gMap = new Map([["g", 1.0]]);
         this.gExpand = new ExpansionRule(gMap);
 
+        let OMap = new Map([["O", 1.0]]);
+        this.OExpand = new ExpansionRule(OMap);
+
         this.lsystem.addExpansionRule("F", this.FExpand);
         this.lsystem.addExpansionRule("A", this.AExpand);
         this.lsystem.addExpansionRule("[", this.saveExpand);
@@ -127,6 +141,7 @@ class Tree {
         this.lsystem.addExpansionRule("v", this.vExpand);
         this.lsystem.addExpansionRule("g", this.gExpand);
         this.lsystem.addExpansionRule("X", this.XExpand);
+        this.lsystem.addExpansionRule("O", this.OExpand);
     }
 
     drawLine() {
@@ -145,6 +160,32 @@ class Tree {
         this.lsystem.turtle.forward = vec4.fromValues(0, -1, 0, 0);
         for(let i = 0; i < 2; i++) {
             this.lsystem.turtle.moveForward(0.6);
+        }
+    }
+
+    drawO() {
+        let p = this.numOranges * this.wisteria/ 10. * Math.max(1.0 - this.depth, 1.0);
+        if (this.lsystem.turtle.getDepth() < 6) {
+            p = 0.0;
+            return;
+        }
+        let probability = Math.random();
+        if (probability < p) {
+            // draw 6 leaves with random rotation 
+            let transformation = mat4.create();
+            let trans =  this.lsystem.turtle.getTranslationMatrix();
+            let rot = this.lsystem.turtle.getRotationMatrix();
+            let identity = mat4.create();
+            mat4.identity(identity);
+            let altRot = mat4.create();
+            mat4.rotateX(altRot, identity, Math.random() * 10);
+            mat4.rotateY(altRot, altRot, Math.random() * 10);
+            mat4.rotateZ(altRot, altRot, Math.random() * 10);
+            
+            mat4.multiply(transformation, trans, rot);
+            mat4.multiply(transformation, transformation, altRot);
+            this.orangeTransformMats.push(transformation);
+            // this.moveDownwards();
         }
     }
 
@@ -286,6 +327,9 @@ class Tree {
         let XMap = new Map([[this.drawLine.bind(this), 1.0]]);
         this.XDraw = new DrawingRule(XMap);
 
+        let OMap = new Map([[this.drawO.bind(this), 1.0]]);
+        this.ODraw = new DrawingRule(OMap);
+
     
         this.lsystem.addDrawingRule("F", this.FDraw);
         this.lsystem.addDrawingRule("A", this.ADraw);
@@ -300,6 +344,7 @@ class Tree {
         this.lsystem.addDrawingRule("v", this.vLeaf);
         this.lsystem.addDrawingRule("g", this.gRotate);
         this.lsystem.addDrawingRule("X", this.XDraw);
+        this.lsystem.addDrawingRule("O", this.ODraw);
     }
 
     build() {
